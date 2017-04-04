@@ -38,6 +38,7 @@ sdpawrap_srcdir = joinpath(BinDeps.depsdir(sdpawrap),"src","sdpawrap")
 sdpawrap_builddir = joinpath(BinDeps.depsdir(sdpawrap), "builds", "sdpa_wrap")
 
 target="libsdpa.$(Libdl.dlext)"
+sdpalib = joinpath(sdpalibdir, target)
 
 makeopts = ["--", "-j", "$(Sys.CPU_CORES+2)"]
 
@@ -54,19 +55,23 @@ genopt = "Unix Makefiles"
   end
 end
 
+mumps = joinpath(sdpasrcdir, "mumps", "build", "include")
+
 sdpa_steps = @build_steps begin
-	`cmake -G "$genopt" -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_BUILD_TYPE="Release" -DCxxWrap_DIR="$cxx_wrap_dir" -DSDPA_DIR="$sdpasrcdir" -DSDPA_INCLUDE_DIRS="$sdpasrcdir" $sdpawrap_srcdir`
+	`cmake -G "$genopt" -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_BUILD_TYPE="Release" -DCxxWrap_DIR="$cxx_wrap_dir" -DSDPA_INCLUDE_DIRS="$sdpasrcdir" -DSDPA_LIBRARY_DIR="$sdpalibdir" -DSDPA_LIBRARY="$sdpalib" -DMUMPS_INCLUDE_DIRS="$mumps" $sdpawrap_srcdir`
 	`cmake --build . --config Release --target install $makeopts`
 end
 
+@show sdpalib
+
 provides(BuildProcess,
 (@build_steps begin
-	GetSources(sdpawrap)
-	CreateDirectory(sdpaprefixdir)
-	CreateDirectory(sdpalibdir)
-	@build_steps begin
-		ChangeDirectory(sdpasrcdir)
-		FileRule(joinpath(sdpalibdir,"$target"),@build_steps begin
+       GetSources(sdpawrap)
+       CreateDirectory(sdpaprefixdir)
+       CreateDirectory(sdpalibdir)
+       @build_steps begin
+            ChangeDirectory(sdpasrcdir)
+            FileRule(joinpath(sdpalibdir,"$target"),@build_steps begin
             pipeline(`sed 's/_a_/_la_/' Makefile.am`, stdout="Makefile.am.1")
             pipeline(`sed 's/libsdpa.a/libsdpa.la\nlibsdpa_la_LDFLAGS = -shared/' Makefile.am.1`, stdout="Makefile.am")
             pipeline(`sed 's/lib_LIB/lib_LTLIB/' Makefile.am`, stdout="Makefile.am.1")
@@ -75,10 +80,10 @@ provides(BuildProcess,
             `rm configure.in`
             `autoreconf -i`
             `./configure CFLAGS=-funroll-all-loops CXXFLAGS=-funroll-all-loops FFLAGS=-funroll-all-loops --with-blas="-L$blas -lblas" --with-lapack="-L$lapack -llapack"`
-			`make`
-			`cp .libs/$target $sdpalibdir/$target`
-		end)
-	end
+            `make`
+            `cp .libs/$target $sdpalibdir/$target`
+        end)
+    end
     CreateDirectory(sdpawrap_builddir)
     @build_steps begin
         ChangeDirectory(sdpawrap_builddir)
