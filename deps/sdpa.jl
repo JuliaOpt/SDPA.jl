@@ -1,7 +1,10 @@
 sdpa = library_dependency("sdpa", aliases=["libsdpa"], depends=depends)
+sdpadd = library_dependency("sdpad", aliases=["libsdpa"], depends=depends)
 
-official_download="http://downloads.sourceforge.net/project/sdpa/sdpa/sdpa_7.3.8.tar.gz?r=&ts=1479039688&use_mirror=vorboss"
+sdpa_download="http://downloads.sourceforge.net/project/sdpa/sdpa/sdpa_7.3.8.tar.gz?r=&ts=1479039688&use_mirror=vorboss"
+sdpadd_download="https://downloads.sourceforge.net/project/sdpa/sdpa-qd-dd/sdpa-dd.7.1.2.src.20091005.tar.gz?r=http%3A%2F%2Fsdpa.sourceforge.net%2Fdownload.html&ts=1506883937&use_mirror=ayera"
 sdpaname = "sdpa-7.3.8"
+sdpaddname = "sdpa-dd.7.1.2.src.20091005"
 sdpa_dir = joinpath(dirname(@__FILE__), "src", sdpaname)
 mumps_include_dir = joinpath(sdpa_dir, "mumps", "build", "include")
 
@@ -20,7 +23,9 @@ mumps_lib_dir = joinpath(mumps_dir, "lib")
 mumps_libseq_dir = joinpath(mumps_dir, "libseq")
 
 provides(Sources,
-        Dict(URI(official_download) => sdpa), unpacked_dir=sdpaname)
+        Dict(URI(sdpa_download) => sdpa), unpacked_dir=sdpaname)
+provides(Sources,
+        Dict(URI(sdpadd_download) => sdpa), unpacked_dir=sdpaddname)
 
 provides(BuildProcess,
 (@build_steps begin
